@@ -19,6 +19,7 @@ Changelog = "https://github.com/tomshlomo/optimashkanta/releases"
 python = "^3.9"
 click = ">=8.0.1"
 numpy = "^1.23.5"
+pre-commit = "^2.20.0"
 
 [tool.poetry.dev-dependencies]
 Pygments = ">=2.10.0"
