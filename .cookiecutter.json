@@ -1,0 +1,14 @@
+{
+  "_output_dir": "/Users/tom.shlomo/workspace/personal",
+  "_template": "gh:cjolowicz/cookiecutter-hypermodern-python",
+  "author": "Tom Shlomo",
+  "copyright_year": "2022",
+  "development_status": "Development Status :: 1 - Planning",
+  "email": "tomshlomo@gmail.com",
+  "friendly_name": "OptiMashkanta",
+  "github_user": "tomshlomo",
+  "license": "MIT",
+  "package_name": "optimashkanta",
+  "project_name": "optimashkanta",
+  "version": "0.0.0"
+}
