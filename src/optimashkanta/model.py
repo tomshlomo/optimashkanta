@@ -25,9 +25,9 @@ class Cols:
     OGEN_LO_TZMOODA = "ogen_lo_tzmooda"
 
 
-EconomicPrediction = NewType(
+EconomicPrediction = NewType(  # type:ignore[valid-newtype]
     "EconomicPrediction", pd.DataFrame
-)  # type:ignore[valid-newtype]
+)
 
 
 @dataclass
@@ -164,11 +164,9 @@ class Prime(LoTzmooda):
     def predict_yearly_rate(
         self, months: pd.RangeIndex, economic_prediction: EconomicPrediction
     ) -> npt.NDArray[np.float64]:
-        return economic_prediction.loc[
+        return economic_prediction.loc[  # type:ignore[no-any-return]
             months, Cols.RBI
-        ].values + self.spread(  # type:ignore[no-any-return]
-            economic_prediction=economic_prediction
-        )
+        ].values + self.spread(economic_prediction=economic_prediction)
 
 
 @dataclass
