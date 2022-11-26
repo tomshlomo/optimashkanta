@@ -6,7 +6,7 @@ from optimashkanta.model import Kalatz
 from optimashkanta.tests.utils import all_close
 
 
-def test_simulate():
+def test_simulate() -> None:
     loan = Kalatz(
         value=192026,
         first_month=0,

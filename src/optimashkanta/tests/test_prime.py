@@ -8,7 +8,7 @@ from optimashkanta.tests.utils import all_close
 from optimashkanta.tests.utils import load_main_prediction
 
 
-def test_constant_rbi():
+def test_constant_rbi() -> None:
     kalatz = Kalatz(
         value=192026,
         first_month=0,
@@ -31,7 +31,7 @@ def test_constant_rbi():
     assert all_close(df_kalatz, df_prime, 1e-6)
 
 
-def test_with_main_prediction():
+def test_with_main_prediction() -> None:
     prime = Prime(
         value=739905,
         first_month=0,

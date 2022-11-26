@@ -6,7 +6,7 @@ from optimashkanta.tests.utils import all_close
 from optimashkanta.tests.utils import load_main_prediction
 
 
-def test_with_main_prediction():
+def test_with_main_prediction() -> None:
     prime = MishtanaTzmooda(
         value=182706,
         first_month=0,

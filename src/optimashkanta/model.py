@@ -3,8 +3,10 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
+from typing import NewType
 
 import numpy as np
+import numpy.typing as npt
 import numpy_financial as npf
 import pandas as pd
 
@@ -23,7 +25,9 @@ class Cols:
     OGEN_LO_TZMOODA = "ogen_lo_tzmooda"
 
 
-EconomicPrediction = pd.DataFrame
+EconomicPrediction = NewType(
+    "EconomicPrediction", pd.DataFrame
+)  # type:ignore[valid-newtype]
 
 
 @dataclass
@@ -46,8 +50,6 @@ class Loan:
         cols = [Cols.PMT, Cols.IPMT, Cols.PPMT, Cols.VAL]
         value = self.value
         for month, row in df.iterrows():
-            month: int
-
             value = self.inflate(value, month, economic_prediction)
             rate = row[Cols.MONTHLY_RATE]
             age = row[Cols.AGE]
@@ -66,7 +68,7 @@ class Loan:
 
     def predict_monthly_rate(
         self, months: pd.RangeIndex, economic_prediction: EconomicPrediction
-    ) -> np.ndarray:
+    ) -> npt.NDArray[np.float64]:
         return (
             self.predict_yearly_rate(
                 months=months, economic_prediction=economic_prediction
@@ -77,7 +79,7 @@ class Loan:
     @abstractmethod
     def predict_yearly_rate(
         self, months: pd.RangeIndex, economic_prediction: EconomicPrediction
-    ) -> np.ndarray:
+    ) -> npt.NDArray[np.float64]:
         pass
 
     def is_tzmooda(self) -> bool:
@@ -92,7 +94,7 @@ class Tzmooda(Loan, ABC):
     def inflate(
         self, val: float, month: int, economic_prediction: EconomicPrediction
     ) -> float:
-        return val * (1 + economic_prediction.at[month, Cols.INFLATION] / 12)
+        return val * (1 + float(economic_prediction.at[month, Cols.INFLATION]) / 12)
 
 
 class LoTzmooda(Loan, ABC):
@@ -108,7 +110,7 @@ class Kvooa(Loan, ABC):
 
     def predict_yearly_rate(
         self, months: pd.RangeIndex, economic_prediction: EconomicPrediction
-    ) -> np.ndarray:
+    ) -> npt.NDArray[np.float64]:
         return np.zeros(months.shape[0]) + self.yearly_rate
 
 
@@ -123,9 +125,8 @@ class Mishtana(Loan, ABC):
     changes_every: int
 
     def spread(self, economic_prediction: EconomicPrediction) -> float:
-        return (
-            self.initial_yearly_rate
-            - economic_prediction.at[self.first_month, self.ogen_col()]
+        return self.initial_yearly_rate - float(
+            economic_prediction.at[self.first_month, self.ogen_col()]
         )
 
     def ogen_col(self) -> str:
@@ -133,12 +134,12 @@ class Mishtana(Loan, ABC):
 
     def predict_yearly_rate(
         self, months: pd.RangeIndex, economic_prediction: EconomicPrediction
-    ) -> np.ndarray:
+    ) -> npt.NDArray[np.float64]:
         spread = self.spread(economic_prediction)
         d = months - self.first_month
         ogen_month = (d // self.changes_every) * self.changes_every
         ogen = economic_prediction.loc[ogen_month, self.ogen_col()]
-        return ogen.values + spread
+        return ogen.values + spread  # type:ignore[no-any-return]
 
 
 @dataclass
@@ -156,15 +157,16 @@ class Prime(LoTzmooda):
     initial_yearly_rate: float
 
     def spread(self, economic_prediction: EconomicPrediction) -> float:
-        return (
-            self.initial_yearly_rate
-            - economic_prediction.at[self.first_month, Cols.RBI]
+        return self.initial_yearly_rate - float(
+            economic_prediction.at[self.first_month, Cols.RBI]
         )
 
     def predict_yearly_rate(
         self, months: pd.RangeIndex, economic_prediction: EconomicPrediction
-    ) -> np.ndarray:
-        return economic_prediction.loc[months, Cols.RBI].values + self.spread(
+    ) -> npt.NDArray[np.float64]:
+        return economic_prediction.loc[
+            months, Cols.RBI
+        ].values + self.spread(  # type:ignore[no-any-return]
             economic_prediction=economic_prediction
         )
 
@@ -175,7 +177,7 @@ class Katz(Tzmooda):
 
     def predict_yearly_rate(
         self, months: pd.RangeIndex, economic_prediction: EconomicPrediction
-    ) -> np.ndarray:
+    ) -> npt.NDArray[np.float64]:
         return np.zeros(months.shape[0]) + self.initial_yearly_rate
 
 
