@@ -12,7 +12,7 @@ ArrayLike: TypeAlias = pd.Series | pd.DataFrame
 def all_close(
     val: ArrayLike, expected: ArrayLike, tol: ArrayLike | float | int
 ) -> bool:
-    return ((val - expected).abs() <= tol).all().all()  # type:ignore[no-any-return]
+    return bool(((val - expected).abs() <= tol).all().all())
 
 
 def load_main_prediction() -> EconomicPrediction:

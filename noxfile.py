@@ -28,12 +28,12 @@ python_versions = ["3.10"]
 nox.needs_version = ">= 2021.6.6"
 nox.options.sessions = (
     "pre-commit",
-    "safety",
+    # "safety",
     "mypy",
     "tests",
     "typeguard",
-    "xdoctest",
-    "docs-build",
+    # "xdoctest",
+    # "docs-build",
 )
 
 
@@ -167,7 +167,8 @@ def tests(session: Session) -> None:
         session.run("coverage", "run", "--parallel", "-m", "pytest", *session.posargs)
     finally:
         if session.interactive:
-            session.notify("coverage", posargs=[])
+            # session.notify("coverage", posargs=[])
+            pass
 
 
 @session(python=python_versions[0])
