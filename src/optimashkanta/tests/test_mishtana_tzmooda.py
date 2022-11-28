@@ -1,13 +1,13 @@
 import numpy as np
 
 from optimashkanta.model import Cols
-from optimashkanta.model import MishtanaTzmooda
+from optimashkanta.model import Matz
 from optimashkanta.tests.utils import all_close
 from optimashkanta.tests.utils import load_main_prediction
 
 
 def test_with_main_prediction() -> None:
-    prime = MishtanaTzmooda(
+    prime = Matz(
         value=182706,
         first_month=0,
         duration=360,
