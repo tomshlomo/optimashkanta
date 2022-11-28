@@ -1,7 +1,7 @@
 from optimashkanta.model import piraon_mookdam_before_discount
 
 
-def test_kvooa_piraon_mookdam_before_discount():
+def test_kvooa_piraon_mookdam_before_discount() -> None:
     result = piraon_mookdam_before_discount(
         monthly_rate_at_piraon=4.65 / 100 / 12,
         avg_monthly_rate_at_piraon=3 / 100 / 12,
@@ -12,7 +12,7 @@ def test_kvooa_piraon_mookdam_before_discount():
     assert abs(result - 20708 / 0.7) < 1e1
 
 
-def test_mishtana_piraon_mookdam_before_discount():
+def test_mishtana_piraon_mookdam_before_discount() -> None:
     result = piraon_mookdam_before_discount(
         monthly_rate_at_piraon=4.65 / 100 / 12,
         avg_monthly_rate_at_piraon=3 / 100 / 12,

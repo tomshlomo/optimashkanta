@@ -167,15 +167,6 @@ class Kvooa(Loan, ABC):
     ) -> npt.NDArray[np.float64]:
         return np.zeros(months.shape[0]) + self.yearly_rate
 
-    def predict_early_piraon(
-        self,
-        month: int,
-        economic_prediction,
-    ) -> float:
-        return (
-            npf.pv(3 / 100 / 12, 360 - 84, 990) - npf.pv(4.65 / 100 / 12, 360 - 84, 990)
-        ) * 0.7
-
 
 @dataclass
 class Kalatz(Kvooa, LoTzmooda):
@@ -186,19 +177,6 @@ class Kalatz(Kvooa, LoTzmooda):
 @dataclass
 class Katz(Kvooa, Tzmooda):
     pass
-
-    def predict_early_piraon(
-        self,
-        month: int,
-        economic_prediction,
-    ) -> float:
-        pass
-
-    #
-    # def predict_yearly_rate(
-    #         self, months: pd.RangeIndex, economic_prediction: EconomicPrediction
-    # ) -> npt.NDArray[np.float64]:
-    #     return np.zeros(months.shape[0]) + self.initial_yearly_rate
 
 
 @dataclass

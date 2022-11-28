@@ -33,7 +33,7 @@ def test_simulate(first_month: int) -> None:
     "first_month",
     [0, 1, 100],
 )
-def test_piraon_mookdam(first_month) -> None:
+def test_piraon_mookdam(first_month: int) -> None:
     prime = Kalatz(
         value=192026,
         first_month=first_month,
