@@ -13,4 +13,4 @@ def test_piraon_mookdam() -> None:
     )
     economic_prediction = load_main_prediction()
     df = prime.simulate(economic_prediction=economic_prediction)
-    assert abs(df.at[84, Cols.PIRAON_MOODKAM] - 5345) < 1
+    assert abs(df.at[84, Cols.AMLAT_PIRAON_MOODKAM] - 5345) < 1

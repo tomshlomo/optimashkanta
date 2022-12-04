@@ -23,7 +23,41 @@ class Cols:
     INFLATION = "inflation"
     OGEN_TZMOODA = "ogen_tzmooda"
     OGEN_LO_TZMOODA = "ogen_lo_tzmooda"
-    PIRAON_MOODKAM = "piraon_mookdam"
+    AMLAT_PIRAON_MOODKAM = "amlat_piraon_mookdam"
+    PIRAON_MOOKDAM_PRICE = "piraon_mookdam_price"
+    DEFLATION_COEF = "deflation_coef"
+    DEFLATED_PMT = "deflated_pmt"
+    DEFLATED_PIRAON_MOOKDAM_PRICE = "piraon_mookdam_price"
+    DEFLATED_AMLAT_PIRAON_MOOKDAM = "deflated_amlat_piraon_mookdam"
+    CUM_PMT = "cum_pmt"
+    TOTAL_PRICE = "total_price"
+    DEFLATED_TOTAL_PRICE = "deflated_total_price"
+    RATIO = "ratio"
+    DEFLATED_RATIO = "deflated_ratio"
+
+
+def get_avg_col_from_duration(remaining_months: int, is_tzmooda: bool) -> str:
+    remaining_years = remaining_months / 12
+    if remaining_years >= 25:
+        x = "25_inf"
+    elif remaining_years >= 20:
+        x = "20_25"
+    elif remaining_years >= 15:
+        x = "15_20"
+    elif remaining_years >= 10:
+        x = "10_15"
+    elif remaining_years >= 5:
+        x = "5_10"
+    elif remaining_years >= 1 and not is_tzmooda:
+        x = "1_5"
+    elif not is_tzmooda:
+        x = "0_1"
+    else:
+        x = "0_5"
+    x = "tzamood_" + x
+    if not is_tzmooda:
+        x = "lo_" + x
+    return x
 
 
 EconomicPrediction = NewType(  # type:ignore[valid-newtype]
@@ -48,7 +82,7 @@ class Loan:
         )
         df[Cols.MONTHLY_RATE] = self.predict_monthly_rate(months, economic_prediction)
         df[Cols.AGE] = np.arange(self.duration)
-        cols = [Cols.PMT, Cols.IPMT, Cols.PPMT, Cols.VAL, Cols.PIRAON_MOODKAM]
+        cols = [Cols.PMT, Cols.IPMT, Cols.PPMT, Cols.VAL, Cols.AMLAT_PIRAON_MOODKAM]
         is_tzmooda = self.is_tzmooda()
         value = self.value
         for month, row in df.iterrows():
@@ -59,20 +93,61 @@ class Loan:
             pmt = npf.pmt(rate=rate, nper=self.duration - age, pv=value)
             ipmt = -rate * value
             ppmt = pmt - ipmt
-            piraon_mookdam = self.calc_piraon_mookdam(month, pmt, rate)
+            piraon_mookdam = self.calc_amlat_piraon_mookdam(
+                month, pmt, rate, economic_prediction
+            )
             df.loc[month, cols] = (pmt, ipmt, ppmt, value, piraon_mookdam)
             value = value + ppmt
+        df[Cols.PIRAON_MOOKDAM_PRICE] = df[Cols.AMLAT_PIRAON_MOODKAM] + df[Cols.VAL]
+        df[Cols.CUM_PMT] = np.cumsum(df[Cols.PMT])
+        df[Cols.TOTAL_PRICE] = -df[Cols.CUM_PMT] + df[Cols.PIRAON_MOOKDAM_PRICE]
+        df[Cols.RATIO] = df[Cols.TOTAL_PRICE] / self.value
+
+        df[Cols.DEFLATION_COEF] = np.insert(
+            np.cumprod(
+                1
+                / (
+                    1
+                    + economic_prediction.loc[df.index[:-1], Cols.INFLATION].values / 12
+                )
+            ),
+            0,
+            1.0,
+            axis=0,
+        )
+        for col in [
+            Cols.PIRAON_MOOKDAM_PRICE,
+            Cols.AMLAT_PIRAON_MOODKAM,
+            Cols.PMT,
+            Cols.RATIO,
+            Cols.TOTAL_PRICE,
+        ]:
+            df[f"deflated_{col}"] = df[col] * df[Cols.DEFLATION_COEF]
         return df
 
-    def calc_piraon_mookdam(
+    def last_month(self) -> int:
+        return self.first_month + self.duration - 1
+
+    def _get_avg_monthly_rate_at_piraon(
+        self, month: int, economic_prediction: EconomicPrediction
+    ) -> float:
+        months_remaining = self.last_month() - month + 1
+        col = get_avg_col_from_duration(months_remaining, self.is_tzmooda())
+        month = min(month, economic_prediction.index[-1])
+        return economic_prediction.at[month, col] / 12
+
+    def calc_amlat_piraon_mookdam(
         self,
         month: int,
         pmt: float,
         monthly_rate: float,
+        economic_prediction: EconomicPrediction,
     ) -> float:
         if isinstance(self, Prime):
             return 0.0
-        avg_monthly_rate_at_piraon = 3 / 100 / 12  # todo: don't hard code
+        avg_monthly_rate_at_piraon = self._get_avg_monthly_rate_at_piraon(
+            month, economic_prediction
+        )
         months_from_piraon_to_change = self.duration - month + self.first_month
         if isinstance(self, Mishtana):
             months_from_piraon_to_change %= self.changes_every
@@ -93,6 +168,7 @@ class Loan:
     def inflate(
         self, val: float, month: int, economic_prediction: EconomicPrediction
     ) -> float:
+        month = min(month, economic_prediction.index[-1])
         return val * (1 + float(economic_prediction.at[month, Cols.INFLATION]) / 12)
 
     def predict_monthly_rate(
@@ -224,6 +300,7 @@ class Prime(LoTzmooda):
     def predict_yearly_rate(
         self, months: pd.RangeIndex, economic_prediction: EconomicPrediction
     ) -> npt.NDArray[np.float64]:
+        months = np.clip(months, 0, economic_prediction.index[-1])
         return economic_prediction.loc[  # type:ignore[no-any-return]
             months, Cols.RBI
         ].values + self.spread(economic_prediction=economic_prediction)
@@ -233,9 +310,31 @@ class Prime(LoTzmooda):
 class Tamhil:
     loans: dict[str, Loan]
 
+    def value(self) -> float:
+        return sum(loan.value for loan in self.loans.values())
+
     def simulate(self, economic_prediction: EconomicPrediction) -> pd.DataFrame:
         dfs = [
             loan.simulate(economic_prediction=economic_prediction)
             for loan in self.loans.values()
         ]
-        return pd.concat(dfs, axis=1, keys=self.loans.keys(), names=["loan_name"])
+        df = pd.concat(dfs, axis=1, keys=self.loans.keys(), names=["loan_name"])
+        cols_to_sum = [
+            Cols.TOTAL_PRICE,
+            Cols.PMT,
+            Cols.PIRAON_MOOKDAM_PRICE,
+            Cols.AMLAT_PIRAON_MOODKAM,
+            Cols.DEFLATED_TOTAL_PRICE,
+            Cols.DEFLATED_PIRAON_MOOKDAM_PRICE,
+            Cols.DEFLATED_PMT,
+            Cols.DEFLATED_AMLAT_PIRAON_MOOKDAM,
+        ]
+        for col in cols_to_sum:
+            cols = [(loan_name, col) for loan_name in self.loans.keys()]
+            if col in [Cols.TOTAL_PRICE, Cols.DEFLATED_TOTAL_PRICE]:
+                df[col] = df.loc[:, cols].fillna(method="ffill").sum(axis=1)
+            else:
+                df[col] = df.loc[:, cols].fillna(0).sum(axis=1)
+        df[Cols.RATIO] = df[Cols.TOTAL_PRICE] / self.value()
+        df[Cols.DEFLATED_RATIO] = df[Cols.DEFLATED_TOTAL_PRICE] / self.value()
+        return df

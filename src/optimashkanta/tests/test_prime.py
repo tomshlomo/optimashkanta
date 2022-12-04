@@ -28,10 +28,10 @@ def test_constant_rbi() -> None:
 
     df_kalatz = kalatz.simulate(economic_prediction=economic_prediction)
     df_prime = prime.simulate(economic_prediction=economic_prediction)
-    assert not df_prime[Cols.PIRAON_MOODKAM].any()
+    assert not df_prime[Cols.AMLAT_PIRAON_MOODKAM].any()
     assert all_close(
-        df_kalatz.drop(columns=[Cols.PIRAON_MOODKAM]),
-        df_prime.drop(columns=[Cols.PIRAON_MOODKAM]),
+        df_kalatz.drop(columns=[Cols.AMLAT_PIRAON_MOODKAM]),
+        df_prime.drop(columns=[Cols.AMLAT_PIRAON_MOODKAM]),
         1e-6,
     )
 
@@ -50,4 +50,4 @@ def test_with_main_prediction() -> None:
         np.array([-3685, -3973]),
         1e1,
     )
-    assert not df[Cols.PIRAON_MOODKAM].any()
+    assert not df[Cols.AMLAT_PIRAON_MOODKAM].any()

@@ -42,4 +42,4 @@ def test_piraon_mookdam(first_month: int) -> None:
     )
     economic_prediction = pd.DataFrame()
     df = prime.simulate(economic_prediction=economic_prediction)
-    assert abs(df.at[84 + first_month, Cols.PIRAON_MOODKAM] - 20708) < 1
+    assert abs(df.at[84 + first_month, Cols.AMLAT_PIRAON_MOODKAM] - 20708) < 1
