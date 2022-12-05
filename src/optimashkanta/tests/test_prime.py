@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 
 from optimashkanta.model import Cols
 from optimashkanta.model import Kalatz
@@ -21,17 +20,24 @@ def test_constant_rbi() -> None:
         duration=360,
         initial_yearly_rate=4.65 / 100,
     )
-    economic_prediction = pd.DataFrame(
-        index=pd.RangeIndex(0, 360),
-    )
+    economic_prediction = load_main_prediction()
     economic_prediction[Cols.RBI] = 10.0
-
     df_kalatz = kalatz.simulate(economic_prediction=economic_prediction)
     df_prime = prime.simulate(economic_prediction=economic_prediction)
     assert not df_prime[Cols.AMLAT_PIRAON_MOODKAM].any()
+    cols_to_skip = [
+        Cols.AMLAT_PIRAON_MOODKAM,
+        Cols.DEFLATED_AMLAT_PIRAON_MOOKDAM,
+        Cols.TOTAL_PRICE,
+        Cols.DEFLATED_TOTAL_PRICE,
+        Cols.RATIO,
+        Cols.DEFLATED_RATIO,
+        Cols.PIRAON_MOOKDAM_PRICE,
+        Cols.DEFLATED_PIRAON_MOOKDAM_PRICE,
+    ]
     assert all_close(
-        df_kalatz.drop(columns=[Cols.AMLAT_PIRAON_MOODKAM]),
-        df_prime.drop(columns=[Cols.AMLAT_PIRAON_MOODKAM]),
+        df_kalatz.drop(columns=cols_to_skip),
+        df_prime.drop(columns=cols_to_skip),
         1e-6,
     )
 

@@ -1,10 +1,11 @@
 import numpy as np
-import pandas as pd
 import pytest
 
 from optimashkanta.model import Cols
 from optimashkanta.model import Kalatz
+from optimashkanta.tests.utils import add_all_avg_cols
 from optimashkanta.tests.utils import all_close
+from optimashkanta.tests.utils import load_main_prediction
 
 
 @pytest.mark.parametrize(
@@ -18,7 +19,8 @@ def test_simulate(first_month: int) -> None:
         duration=360,
         yearly_rate=4.65 / 100,
     )
-    economic_prediction = pd.DataFrame()
+    economic_prediction = load_main_prediction()
+    add_all_avg_cols(economic_prediction)
     df = loan.simulate(economic_prediction=economic_prediction)
     assert all_close(df[Cols.MONTHLY_RATE], 4.65 / 12 / 100, 1e-6)
     assert all_close(df[Cols.PMT], -990.16, 1e-1)
@@ -40,6 +42,6 @@ def test_piraon_mookdam(first_month: int) -> None:
         duration=360,
         yearly_rate=4.65 / 100,
     )
-    economic_prediction = pd.DataFrame()
+    economic_prediction = load_main_prediction()
     df = prime.simulate(economic_prediction=economic_prediction)
     assert abs(df.at[84 + first_month, Cols.AMLAT_PIRAON_MOODKAM] - 20708) < 1

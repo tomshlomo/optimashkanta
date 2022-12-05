@@ -27,7 +27,7 @@ class Cols:
     PIRAON_MOOKDAM_PRICE = "piraon_mookdam_price"
     DEFLATION_COEF = "deflation_coef"
     DEFLATED_PMT = "deflated_pmt"
-    DEFLATED_PIRAON_MOOKDAM_PRICE = "piraon_mookdam_price"
+    DEFLATED_PIRAON_MOOKDAM_PRICE = "deflated_piraon_mookdam_price"
     DEFLATED_AMLAT_PIRAON_MOOKDAM = "deflated_amlat_piraon_mookdam"
     CUM_PMT = "cum_pmt"
     TOTAL_PRICE = "total_price"
@@ -71,6 +71,9 @@ class Loan:
     first_month: int
     duration: int
 
+    def calc_ppmt(self, age: int, value: float, rate: float) -> float:
+        return npf.ppmt(rate=rate, per=1, nper=self.duration - age, pv=value)
+
     def simulate(self, economic_prediction: EconomicPrediction) -> pd.DataFrame:
         months = pd.RangeIndex(
             start=self.first_month,
@@ -90,9 +93,11 @@ class Loan:
                 value = self.inflate(value, month, economic_prediction)
             rate = row[Cols.MONTHLY_RATE]
             age = row[Cols.AGE]
-            pmt = npf.pmt(rate=rate, nper=self.duration - age, pv=value)
+            # pmt = npf.pmt(rate=rate, nper=self.duration - age, pv=value)
             ipmt = -rate * value
-            ppmt = pmt - ipmt
+            # ppmt = pmt - ipmt
+            ppmt = self.calc_ppmt(age, value, rate)
+            pmt = ppmt + ipmt  # todo: vectorize
             piraon_mookdam = self.calc_amlat_piraon_mookdam(
                 month, pmt, rate, economic_prediction
             )
