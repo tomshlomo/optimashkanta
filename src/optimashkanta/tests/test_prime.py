@@ -18,7 +18,8 @@ def test_constant_rbi() -> None:
         value=192026,
         first_month=0,
         duration=360,
-        initial_yearly_rate=4.65 / 100,
+        # initial_yearly_rate=4.65 / 100,
+        spread=4.65 / 100 - 10.0,
     )
     economic_prediction = load_main_prediction()
     economic_prediction[Cols.RBI] = 10.0
@@ -43,11 +44,13 @@ def test_constant_rbi() -> None:
 
 
 def test_with_main_prediction() -> None:
+    economic_prediction = load_main_prediction()
+    spread = 4.35 / 100 - economic_prediction.at[0, Cols.RBI]
     prime = Prime(
         value=739905,
         first_month=0,
         duration=360,
-        initial_yearly_rate=4.35 / 100,
+        spread=spread,
     )
     economic_prediction = load_main_prediction()
     df = prime.simulate(economic_prediction=economic_prediction)

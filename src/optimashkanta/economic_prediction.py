@@ -5,11 +5,7 @@ from optimashkanta.model import Cols
 from optimashkanta.model import EconomicPrediction
 
 
-EYAL_PATH = (
-    "/Users/tom.shlomo/workspace/personal/"
-    "optimashkanta/src/optimashkanta/data/"
-    "eyal_data.xlsx"
-)
+EYAL_PATH = "/Users/tom.shlomo/workspace/personal/optimashkanta/src/optimashkanta/data/eyal_data/שלמה_1397896.5_7120_1.7_11.01_מידע_מלא.xls"
 THETA_PATH = "/Users/tom.shlomo/workspace/personal/" "optimashkanta/data/theta.csv"
 
 CASE_TO_SHEET = {
@@ -18,7 +14,8 @@ CASE_TO_SHEET = {
     0.75: 6,
     0.88: 7,
     1.12: 8,
-    1.5: 9,
+    1.25: 9,
+    1.5: 10,
 }
 
 
@@ -29,8 +26,8 @@ def load_rbi_and_inflation(scenario: float) -> pd.DataFrame:
         usecols="C:D",
         nrows=360,
     )
-    df.columns = [Cols.INFLATION, Cols.RBI]
-    return df
+    df.columns = [Cols.RBI, Cols.INFLATION]
+    return df * 100
 
 
 def load_ogen(scenario: float) -> pd.DataFrame:
@@ -62,6 +59,17 @@ def predict_avgs_by_theta(df: pd.DataFrame, theta: pd.DataFrame) -> None:
     x = df.loc[:, [Cols.RBI, "one"]]
     y = pd.DataFrame(x.values @ theta.values, columns=theta.columns)
     df.loc[:, theta.columns] = y
+    df.loc[:, theta.columns] = 2.0
+    pass
+
+
+def add_deflation_coef(df: pd.DataFrame):
+    df[Cols.DEFLATION_COEF] = np.insert(
+        np.cumprod(1 / (1 + df.loc[df.index[:-1], Cols.INFLATION].values / 12)),
+        0,
+        1.0,
+        axis=0,
+    )
 
 
 def load_economic_prediction(scenario: float) -> EconomicPrediction:
@@ -71,6 +79,7 @@ def load_economic_prediction(scenario: float) -> EconomicPrediction:
     theta = load_theta()
     predict_avgs_by_theta(df, theta)
     df = df / 100
+    add_deflation_coef(df)
     return df
 
 
